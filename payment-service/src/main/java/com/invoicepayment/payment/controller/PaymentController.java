@@ -1,6 +1,8 @@
 package com.invoicepayment.payment.controller;
 
 import com.invoicepayment.payment.dto.PaymentRequest;
+import com.invoicepayment.payment.dto.PaymentRequestDTO;
+import com.invoicepayment.payment.dto.PaymentResponseDTO;
 import com.invoicepayment.payment.model.Payment;
 import com.invoicepayment.payment.model.PaymentStatus;
 import com.invoicepayment.payment.service.PaymentService;
@@ -26,11 +28,11 @@ public class PaymentController {
     }
 
     @PostMapping
-    public ResponseEntity<Payment> makePayment(@RequestBody PaymentRequest request){
+    public ResponseEntity<PaymentResponseDTO> makePayment(@RequestBody PaymentRequest request){
         PaymentStrategy strategy = request.isPremium() ? new PremiumPaymentStrategy() : new StandardPaymentStrategy();
 
-        Payment processedPayment = paymentService.submitPayment(
-                new Payment(request.getInvoiceId(), request.getAmount(), PaymentStatus.PENDING),
+        PaymentResponseDTO processedPayment = paymentService.submitPayment(
+                new PaymentRequestDTO(request.getInvoiceId(), request.getAmount(), PaymentStatus.PENDING),
                 request.getPaymentMethod(),
                 strategy
         );

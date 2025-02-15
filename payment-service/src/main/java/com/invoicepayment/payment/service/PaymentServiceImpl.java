@@ -1,5 +1,7 @@
 package com.invoicepayment.payment.service;
 
+import com.invoicepayment.payment.dto.PaymentRequestDTO;
+import com.invoicepayment.payment.dto.PaymentResponseDTO;
 import com.invoicepayment.payment.event.PaymentEvent;
 import com.invoicepayment.payment.exception.PaymentException;
 import com.invoicepayment.payment.factory.PaymentProcessor;
@@ -27,21 +29,34 @@ public class PaymentServiceImpl implements PaymentService{
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public Payment submitPayment(Payment payment, PaymentMethod paymentMethod, PaymentStrategy strategy) throws PaymentException {
+    public PaymentResponseDTO submitPayment(PaymentRequestDTO payment, PaymentMethod paymentMethod, PaymentStrategy strategy) throws PaymentException {
         validatePayment(payment);
-        return processPayment(payment, paymentMethod, strategy);
+        PaymentResponseDTO responseDTO = new PaymentResponseDTO();
+        Payment result = processPayment(payment, paymentMethod, strategy);
+        convertToDTO(responseDTO, result);
+        return responseDTO;
     }
 
-    public Payment processPayment(Payment payment, PaymentMethod paymentMethod, PaymentStrategy strategy){
+    private static void convertToDTO(PaymentResponseDTO responseDTO, Payment result) {
+        responseDTO.setId(result.getId());
+        responseDTO.setInvoiceId(result.getInvoiceId());
+        responseDTO.setAmount(result.getAmount());
+        responseDTO.setStatus(result.getStatus());
+        responseDTO.setPaymentDate(result.getPaymentDate());
+    }
+
+    public Payment processPayment(PaymentRequestDTO paymentRequestDTO, PaymentMethod paymentMethod, PaymentStrategy strategy){
         try {
             PaymentProcessor processor = PaymentProcessorFactory.getProcessor(paymentMethod);
-            processor.process(payment);
+            processor.process(paymentRequestDTO);
 
             PaymentContext context = new PaymentContext(strategy);
-            double finalAmount = context.executeStrategy(payment.getAmount());
+            double finalAmount = context.executeStrategy(paymentRequestDTO.getAmount());
+
+            Payment payment = new Payment();
+            payment.setInvoiceId(paymentRequestDTO.getInvoiceId());
             payment.setAmount(finalAmount);
             payment.setStatus(PaymentStatus.COMPLETED);
-            payment.setPaymentDate(LocalDateTime.now());
 
         /*
         kafkaTemplate.send("payment-events", new PaymentEvent(savedPayment.getId(),
@@ -55,7 +70,7 @@ public class PaymentServiceImpl implements PaymentService{
         }
     }
 
-    private void validatePayment(Payment payment) throws PaymentException {
+    private void validatePayment(PaymentRequestDTO payment) throws PaymentException {
         if (payment == null) {
             throw new PaymentException("Payment cannot be null.");
         }
