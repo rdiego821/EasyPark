@@ -11,6 +11,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,6 +22,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "invoice")
+@Builder
+@AllArgsConstructor
 public class Invoice {
     @Setter
     @Getter
@@ -45,6 +49,7 @@ public class Invoice {
     @Setter
     @Getter
     @Column(nullable = false)
+    @Builder.Default
     private Date createdAt = new Date();
 
     @Setter

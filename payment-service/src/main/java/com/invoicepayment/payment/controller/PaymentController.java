@@ -29,7 +29,7 @@ public class PaymentController {
     public ResponseEntity<Payment> makePayment(@RequestBody PaymentRequest request){
         PaymentStrategy strategy = request.isPremium() ? new PremiumPaymentStrategy() : new StandardPaymentStrategy();
 
-        Payment processedPayment = paymentService.processPayment(
+        Payment processedPayment = paymentService.submitPayment(
                 new Payment(request.getInvoiceId(), request.getAmount(), PaymentStatus.PENDING),
                 request.getPaymentMethod(),
                 strategy

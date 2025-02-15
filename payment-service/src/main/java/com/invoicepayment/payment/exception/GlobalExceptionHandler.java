@@ -1,4 +1,4 @@
-package com.invoicepayment.invoice.exception;
+package com.invoicepayment.payment.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,8 +11,8 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(InvoiceException.class)
-    public ResponseEntity<Map<String, String>> handleInvoiceProcessingException(InvoiceException ex){
+    @ExceptionHandler(PaymentException.class)
+    public ResponseEntity<Map<String, String>> handleInvoiceProcessingException(PaymentException ex){
         Map<String, String> errorResponse = new HashMap<>();
         errorResponse.put("error", ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
