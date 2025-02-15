@@ -1,4 +1,4 @@
-package com.invoicepayment.payment.config;
+package com.invoicepayment.invoice.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,7 +18,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/payments/**").permitAll()
                         .anyRequest().authenticated()
                 );
-
         return http.build();
     }
 }

@@ -3,25 +3,50 @@ package com.invoicepayment.invoice.model;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
+import java.util.Date;
 import java.util.List;
 
 
 @Entity
+@Table(name = "invoices")
 public class Invoice {
+    @Setter
+    @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Setter
+    @Getter
     private String customerName;
+
+    @Setter
+    @Getter
     private boolean paid;
 
-    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL)
+    @Setter
+    @Getter
+    private double totalAmount;
+
+    @Setter
+    @Getter
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<InvoiceItem> items;
+
+    private Date createdAt = new Date();
+
+    public void calculateTotalAmount(){
+        this.totalAmount = items.stream().mapToDouble(InvoiceItem::getPrice).sum();
+    }
 
     public Invoice(){}
 
@@ -30,15 +55,4 @@ public class Invoice {
         this.paid = paid;
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public String getCustomerName() { return customerName; }
-    public void setCustomerName(String customerName) { this.customerName = customerName; }
-
-    public boolean isPaid() { return paid; }
-    public void setPaid(boolean paid) { this.paid = paid; }
-
-    public List<InvoiceItem> getItems() { return items; }
-    public void setItems(List<InvoiceItem> items) { this.items = items; }
 }
