@@ -1,6 +1,7 @@
 package com.invoicepayment.invoice.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -23,14 +24,17 @@ public class InvoiceItem {
 
     @Setter
     @Getter
+    @Column(nullable = false)
     private String productName;
 
     @Setter
     @Getter
+    @Column(nullable = false)
     private String description;
 
     @Setter
     @Getter
+    @Column(nullable = false)
     private double price;
 
     @Setter

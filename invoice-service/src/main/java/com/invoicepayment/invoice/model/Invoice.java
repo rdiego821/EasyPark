@@ -3,6 +3,7 @@ package com.invoicepayment.invoice.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -18,7 +19,7 @@ import java.util.List;
 
 
 @Entity
-@Table(name = "invoices")
+@Table(name = "invoice")
 public class Invoice {
     @Setter
     @Getter
@@ -28,23 +29,29 @@ public class Invoice {
 
     @Setter
     @Getter
+    @Column(nullable = false)
     private String customerName;
 
     @Setter
     @Getter
+    @Column(nullable = false)
     private boolean paid;
 
     @Setter
     @Getter
+    @Column(nullable = false)
     private double totalAmount;
+
+    @Setter
+    @Getter
+    @Column(nullable = false)
+    private Date createdAt = new Date();
 
     @Setter
     @Getter
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonManagedReference
     private List<InvoiceItem> items;
-
-    private Date createdAt = new Date();
 
     public void calculateTotalAmount(){
         this.totalAmount = items.stream().mapToDouble(InvoiceItem::getPrice).sum();

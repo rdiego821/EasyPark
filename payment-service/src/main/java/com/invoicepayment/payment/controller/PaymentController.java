@@ -35,6 +35,8 @@ public class PaymentController {
                 strategy
         );
 
+        log.info("Payment created with the id: {}", processedPayment.getId());
+
         return ResponseEntity.status(HttpStatus.CREATED).body(processedPayment);
     }
 }

@@ -3,6 +3,7 @@ package com.invoicepayment.invoice.controller;
 import com.invoicepayment.invoice.dto.InvoiceRequest;
 import com.invoicepayment.invoice.model.Invoice;
 import com.invoicepayment.invoice.service.InvoiceService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("api/invoices")
 public class InvoiceController {
@@ -45,6 +47,7 @@ public class InvoiceController {
     @PostMapping
     public ResponseEntity<Invoice> createInvoice(@RequestBody InvoiceRequest request){
         Invoice createdInvoice = invoiceService.createInvoice(request);
+        log.info("Invoice created with the id: {}", createdInvoice.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(createdInvoice);
     }
 }
