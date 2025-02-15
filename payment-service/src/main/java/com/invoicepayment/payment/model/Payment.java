@@ -17,7 +17,7 @@ public class Payment {
     private Long id;
 
     @Column(nullable = false)
-    private Long invoiceId;  // Links to an invoice
+    private Long invoiceId;
 
     @Column(nullable = false)
     private Double amount;
