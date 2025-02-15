@@ -1,7 +1,9 @@
 package com.invoicepayment.invoice.service;
 
-import com.invoicepayment.invoice.dto.InvoiceItemRequest;
-import com.invoicepayment.invoice.dto.InvoiceRequest;
+import com.invoicepayment.invoice.dto.InvoiceItemRequestDTO;
+import com.invoicepayment.invoice.dto.InvoiceItemResponseDTO;
+import com.invoicepayment.invoice.dto.InvoiceRequestDTO;
+import com.invoicepayment.invoice.dto.InvoiceResponseDTO;
 import com.invoicepayment.invoice.exception.InvoiceException;
 import com.invoicepayment.invoice.model.Invoice;
 import com.invoicepayment.invoice.model.InvoiceItem;
@@ -23,7 +25,7 @@ public class InvoiceServiceImpl implements InvoiceService{
     }
 
     @Transactional
-    public Invoice createInvoice(InvoiceRequest request) {
+    public Invoice createInvoice(InvoiceRequestDTO request) {
         validateInvoiceRequest(request);
         Invoice invoice = buildInvoice(request);
         List<InvoiceItem> invoiceItems = createInvoiceItems(request.getInvoiceItems(), invoice);
@@ -32,53 +34,82 @@ public class InvoiceServiceImpl implements InvoiceService{
         return invoiceRepository.save(invoice);
     }
 
-    public List<Invoice> getAllInvoices(){
-        return invoiceRepository.findAll();
+    public List<InvoiceResponseDTO> getAllInvoices(){
+        List<Invoice> invoices = invoiceRepository.findAll();
+        return invoices.stream()
+                .map(this::convertToDTO)
+                .toList();
     }
 
-    public Optional<Invoice> getInvoiceById(Long id){
-        return invoiceRepository.findById(id);
+    public Optional<InvoiceResponseDTO> getInvoiceById(Long id){
+        return invoiceRepository.findById(id)
+                .map(this::convertToDTO);
     }
 
-    public List<Invoice> searchInvoices(String keyword){
-        return invoiceRepository.searchByCustomerOrItemDescription(keyword, keyword);
+    public List<InvoiceResponseDTO> searchInvoices(String keyword){
+        List<Invoice> invoices = invoiceRepository.searchByCustomerOrItemDescription(keyword);
+        return invoices.stream()
+                .map(this::convertToDTO)
+                .toList();
     }
 
     private boolean itemsListIsNullOrEmpty(List<?> list){
         return list == null || list.isEmpty();
     }
 
-    private void validateInvoiceRequest(InvoiceRequest request) {
-        if (itemsListIsNullOrEmpty(request.getInvoiceItems())) {
+    private void validateInvoiceRequest(InvoiceRequestDTO dto) {
+        if (itemsListIsNullOrEmpty(dto.getInvoiceItems())) {
             log.error("Error creating invoice. Invoice must contain at least one line item");
             throw new InvoiceException("Invoice must contain at least one line item.");
         }
     }
 
-    private List<InvoiceItem> createInvoiceItems(List<InvoiceItemRequest> items, Invoice invoice) {
-        return items.stream()
-                .map(item -> mapToInvoiceItem(item, invoice))
+    private List<InvoiceItem> createInvoiceItems(List<InvoiceItemRequestDTO> itemsDTO, Invoice invoice) {
+        return itemsDTO.stream()
+                .map(dto -> mapDTOToInvoiceItem(dto, invoice))
                 .toList();
     }
 
-    private InvoiceItem mapToInvoiceItem(InvoiceItemRequest item, Invoice invoice) {
+    private InvoiceItem mapDTOToInvoiceItem(InvoiceItemRequestDTO dto, Invoice invoice) {
         return InvoiceItem.builder()
-                .productName(item.getProductName())
-                .price(item.getPrice())
-                .description(item.getDescription())
+                .productName(dto.getProductName())
+                .price(dto.getPrice())
+                .description(dto.getDescription())
                 .invoice(invoice)
                 .build();
     }
 
-    private Invoice buildInvoice(InvoiceRequest request) {
+    private Invoice buildInvoice(InvoiceRequestDTO dto) {
         Invoice invoice = Invoice.builder()
-                .customerName(request.getCustomerName())
+                .customerName(dto.getCustomerName())
                 .build();
-
-        List<InvoiceItem> invoiceItems = createInvoiceItems(request.getInvoiceItems(), invoice);
+        List<InvoiceItem> invoiceItems = createInvoiceItems(dto.getInvoiceItems(), invoice);
         invoice.setItems(invoiceItems);
         invoiceItems.forEach(item -> item.setInvoice(invoice));
         invoice.calculateTotalAmount();
         return invoice;
+    }
+
+    private InvoiceResponseDTO convertToDTO(Invoice invoice) {
+        InvoiceResponseDTO dto = new InvoiceResponseDTO();
+        dto.setId(invoice.getId());
+        dto.setCustomerName(invoice.getCustomerName());
+        dto.setPaid(invoice.isPaid());
+        dto.setCreatedAt(invoice.getCreatedAt());
+        dto.setTotalAmount(invoice.getTotalAmount());
+        List<InvoiceItemResponseDTO> itemDTOs = invoice.getItems().stream()
+                .map(this::convertToItemDTO)
+                .toList();
+        dto.setInvoiceItems(itemDTOs);
+        return dto;
+    }
+
+    private InvoiceItemResponseDTO convertToItemDTO(InvoiceItem item) {
+        InvoiceItemResponseDTO dto = new InvoiceItemResponseDTO();
+        dto.setId(item.getId());
+        dto.setProductName(item.getProductName());
+        dto.setPrice(item.getPrice());
+        dto.setDescription(item.getDescription());
+        return dto;
     }
 }

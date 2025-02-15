@@ -12,8 +12,7 @@ import java.util.List;
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
     @Query("SELECT i FROM Invoice i JOIN i.items li WHERE " +
-            "LOWER(i.customerName) LIKE LOWER(CONCAT('%', :customerName, '%')) OR " +
-            "LOWER(li.description) LIKE LOWER(CONCAT('%', :itemDescription, '%'))")
-    List<Invoice> searchByCustomerOrItemDescription(@Param("customerName") String customerName,
-                                                    @Param("itemDescription") String itemDescription);
+            "LOWER(i.customerName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(li.description) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    List<Invoice> searchByCustomerOrItemDescription(@Param("keyword") String keyword);
 }
