@@ -8,6 +8,7 @@ import com.invoicepayment.invoice.repository.InvoiceRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class InvoiceService {
@@ -30,6 +31,7 @@ public class InvoiceService {
                     InvoiceItem invoiceItem = new InvoiceItem();
                     invoiceItem.setProductName(item.getProductName());
                     invoiceItem.setPrice(item.getPrice());
+                    invoiceItem.setDescription(item.getDescription());
                     invoiceItem.setInvoice(invoice);
                     return invoiceItem;
                 }).toList();
@@ -38,5 +40,17 @@ public class InvoiceService {
         invoice.calculateTotalAmount();
 
         return invoiceRepository.save(invoice);
+    }
+
+    public List<Invoice> getAllInvoices(){
+        return invoiceRepository.findAll();
+    }
+
+    public Optional<Invoice> getInvoiceById(Long id){
+        return invoiceRepository.findById(id);
+    }
+
+    public List<Invoice> searchInvoices(String keyword){
+        return invoiceRepository.searchByCustomerOrItemDescription(keyword, keyword);
     }
 }

@@ -1,5 +1,6 @@
 package com.invoicepayment.invoice.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,7 +28,7 @@ public class InvoiceItem {
     @Setter
     @Getter
     private String description;
-    
+
     @Setter
     @Getter
     private double price;
@@ -36,6 +37,7 @@ public class InvoiceItem {
     @Getter
     @ManyToOne
     @JoinColumn(name = "invoice_id", nullable = false)
+    @JsonBackReference
     private Invoice invoice;
 
     public InvoiceItem() {}
