@@ -7,6 +7,8 @@ import com.invoicepayment.invoice.dto.InvoiceRequest;
 import com.invoicepayment.invoice.dto.InvoiceResponseDTO;
 import com.invoicepayment.invoice.model.Invoice;
 import com.invoicepayment.invoice.service.InvoiceService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("api/invoices")
+@Tag(name= "Invoice API", description = "Operations related to invoices")
 public class InvoiceController {
 
     private final InvoiceService invoiceService;
@@ -31,11 +34,13 @@ public class InvoiceController {
         this.invoiceService = invoiceService;
     }
 
+    @Operation(summary = "Get all invoices", description = "Retrieve a list of all invoices")
     @GetMapping
     public ResponseEntity<List<InvoiceResponseDTO>> getAllInvoices(){
         return ResponseEntity.status(HttpStatus.OK).body(invoiceService.getAllInvoices());
     }
 
+    @Operation(summary = "Get invoice by ID", description = "Retrieve an invoice by its ID")
     @GetMapping("/{id}")
     public ResponseEntity<InvoiceResponseDTO> getInvoiceById(@PathVariable Long id){
         return invoiceService.getInvoiceById(id)
@@ -43,11 +48,13 @@ public class InvoiceController {
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
+    @Operation(summary = "Get invoice by search criteria", description = "Retrieve an invoice by search criteria")
     @GetMapping("/search")
     public ResponseEntity<List<InvoiceResponseDTO>> searchInvoice(@RequestParam String keyword){
         return ResponseEntity.ok(invoiceService.searchInvoices(keyword));
     }
 
+    @Operation(summary = "Create an invoice", description = "Create an invoice")
     @PostMapping
     public ResponseEntity<Invoice> createInvoice(@RequestBody InvoiceRequest request){
         InvoiceRequestDTO invoiceRequestDTO = convertToDTO(request);
