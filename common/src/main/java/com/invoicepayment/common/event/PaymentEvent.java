@@ -1,4 +1,4 @@
-package com.invoicepayment.payment.event;
+package com.invoicepayment.common.event;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

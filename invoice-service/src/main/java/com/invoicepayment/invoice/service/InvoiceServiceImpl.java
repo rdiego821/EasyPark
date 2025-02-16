@@ -1,15 +1,18 @@
 package com.invoicepayment.invoice.service;
 
+import ch.qos.logback.core.util.StringUtil;
 import com.invoicepayment.invoice.dto.InvoiceItemRequestDTO;
 import com.invoicepayment.invoice.dto.InvoiceItemResponseDTO;
 import com.invoicepayment.invoice.dto.InvoiceRequestDTO;
 import com.invoicepayment.invoice.dto.InvoiceResponseDTO;
+import com.invoicepayment.invoice.event.InvoiceEvent;
 import com.invoicepayment.invoice.exception.InvoiceException;
 import com.invoicepayment.invoice.model.Invoice;
 import com.invoicepayment.invoice.model.InvoiceItem;
 import com.invoicepayment.invoice.repository.InvoiceRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,9 +22,11 @@ import java.util.Optional;
 @Service
 public class InvoiceServiceImpl implements InvoiceService{
     private final InvoiceRepository invoiceRepository;
+    private final KafkaTemplate<String, InvoiceEvent> kafkaTemplate;
 
-    public InvoiceServiceImpl(InvoiceRepository invoiceRepository) {
+    public InvoiceServiceImpl(InvoiceRepository invoiceRepository, KafkaTemplate<String, InvoiceEvent> kafkaTemplate) {
         this.invoiceRepository = invoiceRepository;
+        this.kafkaTemplate = kafkaTemplate;
     }
 
     @Transactional
@@ -31,6 +36,9 @@ public class InvoiceServiceImpl implements InvoiceService{
         List<InvoiceItem> invoiceItems = createInvoiceItems(request.getInvoiceItems(), invoice);
         invoice.setItems(invoiceItems);
         invoice.calculateTotalAmount();
+
+        Invoice savedInvoice = invoiceRepository.save(invoice);
+        kafkaTemplate.send("invoice-events", new InvoiceEvent(savedInvoice.getId(), "INVOICE CREATED"));
         return invoiceRepository.save(invoice);
     }
 
@@ -58,9 +66,21 @@ public class InvoiceServiceImpl implements InvoiceService{
     }
 
     private void validateInvoiceRequest(InvoiceRequestDTO dto) {
+        if(StringUtil.isNullOrEmpty(dto.getCustomerName())){
+            log.error("Customer name is required.");
+            throw new InvoiceException("Customer name is required.");
+        }
+
         if (itemsListIsNullOrEmpty(dto.getInvoiceItems())) {
-            log.error("Error creating invoice. Invoice must contain at least one line item");
+            log.error("Invoice must contain at least one line item");
             throw new InvoiceException("Invoice must contain at least one line item.");
+        }
+
+        for(InvoiceItemRequestDTO item : dto.getInvoiceItems()){
+            if(item.getPrice() <= 0){
+                log.error("Item price must be greater than zero.");
+                throw new InvoiceException("Item price must be greater than zero.");
+            }
         }
     }
 

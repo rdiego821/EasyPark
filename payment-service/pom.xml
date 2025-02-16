@@ -85,6 +85,12 @@
             <version>2.12.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.easypark</groupId>
+            <artifactId>common</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
 
     </dependencies>
 </project>

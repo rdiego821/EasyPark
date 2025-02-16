@@ -1,8 +1,8 @@
 package com.invoicepayment.payment.service;
 
+import com.invoicepayment.common.event.PaymentEvent;
 import com.invoicepayment.payment.dto.PaymentRequestDTO;
 import com.invoicepayment.payment.dto.PaymentResponseDTO;
-import com.invoicepayment.payment.event.PaymentEvent;
 import com.invoicepayment.payment.exception.PaymentException;
 import com.invoicepayment.payment.factory.PaymentProcessor;
 import com.invoicepayment.payment.factory.PaymentProcessorFactory;
@@ -35,7 +35,7 @@ public class PaymentServiceImpl implements PaymentService{
         return responseDTO;
     }
 
-    private static void convertToDTO(PaymentResponseDTO responseDTO, Payment result) {
+    private void convertToDTO(PaymentResponseDTO responseDTO, Payment result) {
         responseDTO.setId(result.getId());
         responseDTO.setInvoiceId(result.getInvoiceId());
         responseDTO.setAmount(result.getAmount());
@@ -47,25 +47,27 @@ public class PaymentServiceImpl implements PaymentService{
         try {
             PaymentProcessor processor = PaymentProcessorFactory.getProcessor(paymentMethod);
             processor.process(paymentRequestDTO);
-
             PaymentContext context = new PaymentContext(strategy);
             double finalAmount = context.executeStrategy(paymentRequestDTO.getAmount());
+            Payment payment = getPayment(paymentRequestDTO, finalAmount);
+            Payment savedPayment = paymentRepository.save(payment);
 
-            Payment payment = new Payment();
-            payment.setInvoiceId(paymentRequestDTO.getInvoiceId());
-            payment.setAmount(finalAmount);
-            payment.setStatus(PaymentStatus.COMPLETED);
+            kafkaTemplate.send("payment-events", new PaymentEvent(savedPayment.getId(),
+                    savedPayment.getInvoiceId(), savedPayment.getStatus().toString()));
 
-        /*
-        kafkaTemplate.send("payment-events", new PaymentEvent(savedPayment.getId(),
-                savedPayment.getInvoiceId(), savedPayment.getStatus().toString()));
-
-         */
-            return paymentRepository.save(payment);
+            return savedPayment;
         } catch(Exception e){
             log.error("Error processing payment: {}", e.getMessage(), e);
             throw new PaymentException("Error processing payment: " + e.getMessage());
         }
+    }
+
+    private Payment getPayment(PaymentRequestDTO paymentRequestDTO, double finalAmount) {
+        Payment payment = new Payment();
+        payment.setInvoiceId(paymentRequestDTO.getInvoiceId());
+        payment.setAmount(finalAmount);
+        payment.setStatus(PaymentStatus.PAID);
+        return payment;
     }
 
     private void validatePayment(PaymentRequestDTO payment) throws PaymentException {
@@ -74,6 +76,9 @@ public class PaymentServiceImpl implements PaymentService{
         }
         if (payment.getAmount() <= 0) {
             throw new PaymentException("Payment amount must be greater than zero.");
+        }
+        if(payment.getInvoiceId() != null){
+            throw new PaymentException("Invoice Id is required.");
         }
     }
 }
