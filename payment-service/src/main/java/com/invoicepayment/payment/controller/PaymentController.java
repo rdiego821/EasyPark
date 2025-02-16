@@ -11,6 +11,8 @@ import com.invoicepayment.payment.strategy.StandardPaymentStrategy;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,6 +35,7 @@ public class PaymentController {
 
     @Operation(summary = "Create payment", description = "Create payment")
     @PostMapping
+    @CacheEvict(value = "paymentCache", allEntries = true)
     public ResponseEntity<PaymentResponseDTO> makePayment(@RequestBody PaymentRequest request){
         PaymentStrategy strategy = request.isPremium() ? new PremiumPaymentStrategy() : new StandardPaymentStrategy();
         PaymentResponseDTO processedPayment = paymentService.submitPayment(
@@ -46,6 +49,7 @@ public class PaymentController {
 
     @Operation(summary = "Get payment by ID", description = "Retrieve a payment by its ID")
     @GetMapping("/{id}")
+    @Cacheable(value = "paymentCache", key = "#id")
     public ResponseEntity<PaymentResponseDTO> getPaymentById(@PathVariable Long id){
         return paymentService.getPaymentById(id)
                 .map(ResponseEntity::ok)

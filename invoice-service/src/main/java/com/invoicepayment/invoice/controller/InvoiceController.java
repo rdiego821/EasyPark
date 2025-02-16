@@ -10,6 +10,8 @@ import com.invoicepayment.invoice.service.InvoiceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,12 +38,14 @@ public class InvoiceController {
 
     @Operation(summary = "Get all invoices", description = "Retrieve a list of all invoices")
     @GetMapping
+    @Cacheable(value = "invoicesCache")
     public ResponseEntity<List<InvoiceResponseDTO>> getAllInvoices(){
         return ResponseEntity.status(HttpStatus.OK).body(invoiceService.getAllInvoices());
     }
 
     @Operation(summary = "Get invoice by ID", description = "Retrieve an invoice by its ID")
     @GetMapping("/{id}")
+    @Cacheable(value = "invoiceCache", key = "#id")
     public ResponseEntity<InvoiceResponseDTO> getInvoiceById(@PathVariable Long id){
         return invoiceService.getInvoiceById(id)
                 .map(ResponseEntity::ok)
@@ -56,6 +60,7 @@ public class InvoiceController {
 
     @Operation(summary = "Create an invoice", description = "Create an invoice")
     @PostMapping
+    @CacheEvict(value = "invoicesCache", allEntries = true)
     public ResponseEntity<Invoice> createInvoice(@RequestBody InvoiceRequest request){
         InvoiceRequestDTO invoiceRequestDTO = convertToDTO(request);
         Invoice createdInvoice = invoiceService.createInvoice(invoiceRequestDTO);
