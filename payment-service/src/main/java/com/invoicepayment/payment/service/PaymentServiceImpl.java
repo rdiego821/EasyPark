@@ -74,11 +74,11 @@ public class PaymentServiceImpl implements PaymentService{
         if (payment == null) {
             throw new PaymentException("Payment cannot be null.");
         }
+        if(payment.getInvoiceId() == null){
+            throw new PaymentException("Invoice Id is required.");
+        }
         if (payment.getAmount() <= 0) {
             throw new PaymentException("Payment amount must be greater than zero.");
-        }
-        if(payment.getInvoiceId() != null){
-            throw new PaymentException("Invoice Id is required.");
         }
     }
 }
