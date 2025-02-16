@@ -31,7 +31,7 @@ public class PaymentServiceImpl implements PaymentService{
     private final KafkaTemplate<String, PaymentEvent> kafkaTemplate;
     private final WebClient webClient;
 
-    public PaymentServiceImpl(PaymentRepository paymentRepository, KafkaTemplate<String, PaymentEvent> kafkaTemplate, WebClient webClient) {
+    public PaymentServiceImpl(PaymentRepository paymentRepository, KafkaTemplate<String, PaymentEvent> kafkaTemplate) {
         this.paymentRepository = paymentRepository;
         this.kafkaTemplate = kafkaTemplate;
         this.webClient = WebClient.builder().baseUrl(INVOICE_SERVICE_BASE_URL).build();

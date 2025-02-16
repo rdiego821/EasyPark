@@ -2,6 +2,7 @@ package com.invoicepayment.payment.service;
 
 import com.invoicepayment.common.event.PaymentEvent;
 import com.invoicepayment.payment.dto.PaymentRequestDTO;
+import com.invoicepayment.payment.dto.PaymentResponseDTO;
 import com.invoicepayment.payment.exception.PaymentException;
 import com.invoicepayment.payment.model.Payment;
 import com.invoicepayment.payment.model.PaymentMethod;
@@ -18,11 +19,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -116,5 +120,15 @@ class PaymentServiceTest {
                 paymentService.submitPayment(request, paymentMethod, paymentStrategy)
         );
         assertEquals("Invoice Id is required.", exception.getMessage());
+    }
+
+    @Test
+    void shouldReturnPaymentWhenIdExists() {
+        when(paymentRepository.findById(anyLong())).thenReturn(Optional.of(payment));
+
+        Optional<PaymentResponseDTO> response = paymentService.getPaymentById(1L);
+
+        assertTrue(response.isPresent());
+        assertEquals(500.0, response.get().getAmount());
     }
 }
