@@ -1,11 +1,11 @@
 package com.invoicepayment.invoice.service;
 
 import ch.qos.logback.core.util.StringUtil;
+import com.invoicepayment.common.event.InvoiceEvent;
 import com.invoicepayment.invoice.dto.InvoiceItemRequestDTO;
 import com.invoicepayment.invoice.dto.InvoiceItemResponseDTO;
 import com.invoicepayment.invoice.dto.InvoiceRequestDTO;
 import com.invoicepayment.invoice.dto.InvoiceResponseDTO;
-import com.invoicepayment.invoice.event.InvoiceEvent;
 import com.invoicepayment.invoice.exception.InvoiceException;
 import com.invoicepayment.invoice.model.Invoice;
 import com.invoicepayment.invoice.model.InvoiceItem;
@@ -37,9 +37,8 @@ public class InvoiceServiceImpl implements InvoiceService{
         invoice.setItems(invoiceItems);
         invoice.calculateTotalAmount();
 
-        Invoice savedInvoice = invoiceRepository.save(invoice);
-        kafkaTemplate.send("invoice-events", new InvoiceEvent(savedInvoice.getId(), "INVOICE CREATED"));
         return invoiceRepository.save(invoice);
+        //kafkaTemplate.send("invoice-events", new InvoiceEvent(savedInvoice.getId(), "INVOICE CREATED"));
     }
 
     public List<InvoiceResponseDTO> getAllInvoices(){

@@ -1,4 +1,4 @@
-package com.invoicepayment.invoice.event;
+package com.invoicepayment.common.event;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -8,9 +8,9 @@ import lombok.Setter;
 
 import java.io.Serializable;
 
-@NoArgsConstructor
 @Getter
 @Setter
+@NoArgsConstructor
 public class InvoiceEvent implements Serializable {
     private Long invoiceId;
     private String message;
