@@ -3,6 +3,7 @@ package com.invoicepayment.payment.controller;
 import com.invoicepayment.payment.dto.PaymentRequest;
 import com.invoicepayment.payment.dto.PaymentRequestDTO;
 import com.invoicepayment.payment.dto.PaymentResponseDTO;
+import com.invoicepayment.payment.exception.PaymentException;
 import com.invoicepayment.payment.model.PaymentStatus;
 import com.invoicepayment.payment.service.PaymentService;
 import com.invoicepayment.payment.strategy.PaymentStrategy;
@@ -53,6 +54,6 @@ public class PaymentController {
     public ResponseEntity<PaymentResponseDTO> getPaymentById(@PathVariable Long id){
         return paymentService.getPaymentById(id)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+                .orElseThrow(() -> new PaymentException("Payment with ID " + id + " not found."));
     }
 }

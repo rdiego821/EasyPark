@@ -5,6 +5,7 @@ import com.invoicepayment.invoice.dto.InvoiceItemRequestDTO;
 import com.invoicepayment.invoice.dto.InvoiceItemRequest;
 import com.invoicepayment.invoice.dto.InvoiceRequest;
 import com.invoicepayment.invoice.dto.InvoiceResponseDTO;
+import com.invoicepayment.invoice.exception.InvoiceException;
 import com.invoicepayment.invoice.model.Invoice;
 import com.invoicepayment.invoice.service.InvoiceService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,7 +50,7 @@ public class InvoiceController {
     public ResponseEntity<InvoiceResponseDTO> getInvoiceById(@PathVariable Long id){
         return invoiceService.getInvoiceById(id)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+                .orElseThrow(() -> new InvoiceException("Invoice with ID " + id + " not found."));
     }
 
     @Operation(summary = "Get invoice by search criteria", description = "Retrieve an invoice by search criteria")
