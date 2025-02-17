@@ -40,7 +40,7 @@ cd ../payment-service && mvn spring-boot:run
 ## 🎯 API Examples
 Here are some cURL commands to test the APIs.
 
-📄 Invoices (Invoice Service)
+## 📄 Invoices (Invoice Service)  
 ✅ Get all invoices
 
 ```
