@@ -43,7 +43,7 @@ Here are some cURL commands to test the APIs.
 ## 📄 Invoices (Invoice Service)  
 ✅ Get all invoices
 
-```
+```bash
 curl -X GET "http://localhost:8081/api/invoices"
 ```
 
