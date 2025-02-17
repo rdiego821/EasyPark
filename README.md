@@ -2,7 +2,7 @@
 
 # 🧾 Invoice & Payment System
 
-This project is a *microservices-based* invoicing and payment system. It allows invoice creation and payment processing. API documentation via **Swagger*.
+This project is a *microservices-based* invoicing and payment system. It allows invoice creation and payment processing. API documentation via **Swagger**.
 
 ## 🚀 Technologies Used
 
