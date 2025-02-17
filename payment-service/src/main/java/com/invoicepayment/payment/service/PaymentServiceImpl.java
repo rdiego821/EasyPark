@@ -55,13 +55,10 @@ public class PaymentServiceImpl implements PaymentService{
             double finalAmount = context.executeStrategy(paymentRequestDTO.getAmount());
             Payment payment = getPayment(paymentRequestDTO, finalAmount);
             Payment savedPayment = paymentRepository.save(payment);
-
             /*
             kafkaTemplate.send("payment-events", new PaymentEvent(savedPayment.getId(),
                     savedPayment.getInvoiceId(), savedPayment.getStatus().toString()));
-
              */
-
             return savedPayment;
         } catch(Exception e){
             log.error("Error processing payment: {}", e.getMessage(), e);
@@ -72,7 +69,6 @@ public class PaymentServiceImpl implements PaymentService{
     @Override
     public void handleInvoiceEvent(InvoiceEvent event){
         log.info("Processing invoice event for Invoice ID: {}", event.getInvoiceId());
-
         if(INVOICE_CREATED.equals(event.getMessage())){
             log.info("Invoice {} is ready for payment processing.", event.getInvoiceId());
         }

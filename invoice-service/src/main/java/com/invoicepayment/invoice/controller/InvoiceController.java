@@ -53,7 +53,7 @@ public class InvoiceController {
                 .orElseThrow(() -> new InvoiceException("Invoice with ID " + id + " not found."));
     }
 
-    @Operation(summary = "Get invoice by search criteria", description = "Retrieve an invoice by search criteria")
+    @Operation(summary = "Get invoice by search criteria", description = "Retrieve an invoice by search criteria (customer name or item description)")
     @GetMapping("/search")
     public ResponseEntity<List<InvoiceResponseDTO>> searchInvoice(@RequestParam String keyword){
         return ResponseEntity.ok(invoiceService.searchInvoices(keyword));

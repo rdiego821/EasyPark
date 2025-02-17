@@ -8,9 +8,13 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "payment")
 public class Payment {
@@ -41,16 +45,4 @@ public class Payment {
         this.status = status;
         this.paymentDate = LocalDateTime.now();
     }
-
-    public Long getId() { return id; }
-    public Long getInvoiceId() { return invoiceId; }
-    public Double getAmount() { return amount; }
-    public PaymentStatus getStatus() { return status; }
-    public LocalDateTime getPaymentDate() { return paymentDate; }
-
-    public void setId(Long id) { this.id = id; }
-    public void setInvoiceId(Long invoiceId) { this.invoiceId = invoiceId; }
-    public void setAmount(Double amount) { this.amount = amount; }
-    public void setStatus(PaymentStatus status) { this.status = status; }
-    public void setPaymentDate(LocalDateTime paymentDate) { this.paymentDate = paymentDate; }
 }

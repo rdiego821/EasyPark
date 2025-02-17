@@ -14,35 +14,28 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+
+@Getter
+@Setter
 @Entity
 @Table(name = "invoice_items")
 @Builder
 @AllArgsConstructor
 public class InvoiceItem {
 
-    @Setter
-    @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Setter
-    @Getter
     @Column(nullable = false)
     private String productName;
 
-    @Setter
-    @Getter
     @Column(nullable = false)
     private String description;
 
-    @Setter
-    @Getter
     @Column(nullable = false)
     private double price;
 
-    @Setter
-    @Getter
     @ManyToOne
     @JoinColumn(name = "invoice_id", nullable = false)
     @JsonBackReference

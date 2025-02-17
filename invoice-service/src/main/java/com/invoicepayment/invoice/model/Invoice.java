@@ -19,41 +19,30 @@ import lombok.Setter;
 import java.util.Date;
 import java.util.List;
 
-
+@Getter
+@Setter
 @Entity
 @Table(name = "invoice")
 @Builder
 @AllArgsConstructor
 public class Invoice {
-    @Setter
-    @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Setter
-    @Getter
     @Column(nullable = false)
     private String customerName;
 
-    @Setter
-    @Getter
     @Column(nullable = false)
     private boolean paid;
 
-    @Setter
-    @Getter
     @Column(nullable = false)
     private double totalAmount;
 
-    @Setter
-    @Getter
     @Column(nullable = false)
     @Builder.Default
     private Date createdAt = new Date();
 
-    @Setter
-    @Getter
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonManagedReference
     private List<InvoiceItem> items;
@@ -68,5 +57,4 @@ public class Invoice {
         this.customerName = customerName;
         this.paid = paid;
     }
-
 }
