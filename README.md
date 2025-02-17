@@ -19,7 +19,7 @@ This project is a *microservices-based* invoicing and payment system. It allows 
 The project includes Swagger OpenAPI for interactive API documentation.
 Access it via:
 
-Invoice Service → http://localhost:8081/swagger-ui.html
+Invoice Service → http://localhost:8081/swagger-ui.html  
 Payment Service → http://localhost:8082/swagger-ui.html
 
 ## 📦 Installation & Execution
