@@ -46,6 +46,13 @@ Here are some cURL commands to test the APIs.
 ```
 curl -X GET "http://localhost:8081/api/invoices"
 ```
+
+✅ Get invoice by ID
+
+```
+curl -X GET "http://localhost:8081/api/invoices/{id}"
+```
+
 ✅ Create a new invoice
 
 ```
