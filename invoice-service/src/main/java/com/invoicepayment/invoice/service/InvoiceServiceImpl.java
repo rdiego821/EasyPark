@@ -115,6 +115,7 @@ public class InvoiceServiceImpl implements InvoiceService{
         dto.setCustomerName(invoice.getCustomerName());
         dto.setPaid(invoice.isPaid());
         dto.setCreatedAt(invoice.getCreatedAt());
+        invoice.calculateTotalAmount();
         dto.setTotalAmount(invoice.getTotalAmount());
         List<InvoiceItemResponseDTO> itemDTOs = invoice.getItems().stream()
                 .map(this::convertToItemDTO)

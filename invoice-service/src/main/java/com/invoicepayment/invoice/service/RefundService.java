@@ -21,22 +21,19 @@ public class RefundService {
 
     public List<InvoiceItem> processRefund(Long invoiceId){
         return invoiceRepository.findById(invoiceId).map(invoice -> {
-            List<InvoiceItem> originalItems = invoice.getItems();
+            var originalItems = invoice.getItems();
 
-            List<InvoiceItem> refundItems = originalItems.stream().map(originalItem -> {
-                InvoiceItem refundItem = new InvoiceItem();
+            var refundItems = originalItems.stream().map(originalItem -> {
+                var refundItem = new InvoiceItem();
                 refundItem.setProductName(originalItem.getProductName());
                 refundItem.setDescription(originalItem.getDescription());
                 refundItem.setPrice(-originalItem.getPrice());
-                invoice.calculateTotalAmount();
                 refundItem.setInvoice(invoice);
                 return refundItem;
             }).toList();
 
             refundItems = invoiceItemRepository.saveAll(refundItems);
-
             return refundItems;
         }).orElse(Collections.emptyList());
     }
-
 }
