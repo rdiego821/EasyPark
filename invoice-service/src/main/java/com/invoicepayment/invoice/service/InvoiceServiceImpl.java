@@ -1,12 +1,10 @@
 package com.invoicepayment.invoice.service;
 
-import ch.qos.logback.core.util.StringUtil;
 import com.invoicepayment.common.event.InvoiceEvent;
 import com.invoicepayment.invoice.dto.InvoiceItemRequestDTO;
-import com.invoicepayment.invoice.dto.InvoiceItemResponseDTO;
 import com.invoicepayment.invoice.dto.InvoiceRequestDTO;
 import com.invoicepayment.invoice.dto.InvoiceResponseDTO;
-import com.invoicepayment.invoice.exception.InvoiceException;
+import com.invoicepayment.invoice.mapper.InvoiceMapper;
 import com.invoicepayment.invoice.model.Invoice;
 import com.invoicepayment.invoice.model.InvoiceItem;
 import com.invoicepayment.invoice.repository.InvoiceRepository;
@@ -20,82 +18,56 @@ import java.util.Optional;
 
 @Slf4j
 @Service
+@Transactional
 public class InvoiceServiceImpl implements InvoiceService{
     private final InvoiceRepository invoiceRepository;
     private final KafkaTemplate<String, InvoiceEvent> kafkaTemplate;
+    private final InvoiceValidator invoiceValidator;
+    private final InvoiceMapper invoiceMapper;
 
-    public InvoiceServiceImpl(InvoiceRepository invoiceRepository, KafkaTemplate<String, InvoiceEvent> kafkaTemplate) {
+    public InvoiceServiceImpl(InvoiceRepository invoiceRepository, KafkaTemplate<String, InvoiceEvent> kafkaTemplate, InvoiceValidator invoiceValidator, InvoiceMapper invoiceMapper) {
         this.invoiceRepository = invoiceRepository;
         this.kafkaTemplate = kafkaTemplate;
+        this.invoiceValidator = invoiceValidator;
+        this.invoiceMapper = invoiceMapper;
     }
 
-    @Transactional
     public Invoice createInvoice(InvoiceRequestDTO request) {
-        validateInvoiceRequest(request);
+        invoiceValidator.validateInvoiceRequest(request);
         Invoice invoice = buildInvoice(request);
         List<InvoiceItem> invoiceItems = createInvoiceItems(request.getInvoiceItems(), invoice);
         invoice.setItems(invoiceItems);
         invoice.calculateTotalAmount();
 
         return invoiceRepository.save(invoice);
-        //kafkaTemplate.send("invoice-events", new InvoiceEvent(savedInvoice.getId(), "INVOICE CREATED"));
+        //TODO Add kafka implementation
+        //
+        // kafkaTemplate.send("invoice-events", new InvoiceEvent(savedInvoice.getId(), "INVOICE CREATED"));
     }
 
     public List<InvoiceResponseDTO> getAllInvoices(){
         List<Invoice> invoices = invoiceRepository.findAll();
         return invoices.stream()
-                .map(this::convertToDTO)
+                .map(invoiceMapper::convertToDTO)
                 .toList();
     }
 
     public Optional<InvoiceResponseDTO> getInvoiceById(Long id){
         return invoiceRepository.findById(id)
-                .map(this::convertToDTO);
+                .map(invoiceMapper::convertToDTO);
     }
 
     public List<InvoiceResponseDTO> searchInvoices(String keyword){
         List<Invoice> invoices = invoiceRepository.searchByCustomerOrItemDescription(keyword);
         return invoices.stream()
-                .map(this::convertToDTO)
+                .map(invoiceMapper::convertToDTO)
                 .toList();
-    }
-
-    private boolean itemsListIsNullOrEmpty(List<?> list){
-        return list == null || list.isEmpty();
-    }
-
-    private void validateInvoiceRequest(InvoiceRequestDTO dto) {
-        if(StringUtil.isNullOrEmpty(dto.getCustomerName())){
-            log.error("Customer name is required.");
-            throw new InvoiceException("Customer name is required.");
-        }
-
-        if (itemsListIsNullOrEmpty(dto.getInvoiceItems())) {
-            log.error("Invoice must contain at least one line item");
-            throw new InvoiceException("Invoice must contain at least one line item.");
-        }
-
-        for(InvoiceItemRequestDTO item : dto.getInvoiceItems()){
-            if(item.getPrice() <= 0){
-                log.error("Item price must be greater than zero.");
-                throw new InvoiceException("Item price must be greater than zero.");
-            }
-        }
     }
 
     private List<InvoiceItem> createInvoiceItems(List<InvoiceItemRequestDTO> itemsDTO, Invoice invoice) {
         return itemsDTO.stream()
-                .map(dto -> mapDTOToInvoiceItem(dto, invoice))
+                .map(dto -> invoiceMapper.mapDTOToInvoiceItem(dto, invoice))
                 .toList();
-    }
-
-    private InvoiceItem mapDTOToInvoiceItem(InvoiceItemRequestDTO dto, Invoice invoice) {
-        return InvoiceItem.builder()
-                .productName(dto.getProductName())
-                .price(dto.getPrice())
-                .description(dto.getDescription())
-                .invoice(invoice)
-                .build();
     }
 
     private Invoice buildInvoice(InvoiceRequestDTO dto) {
@@ -107,29 +79,5 @@ public class InvoiceServiceImpl implements InvoiceService{
         invoiceItems.forEach(item -> item.setInvoice(invoice));
         invoice.calculateTotalAmount();
         return invoice;
-    }
-
-    private InvoiceResponseDTO convertToDTO(Invoice invoice) {
-        InvoiceResponseDTO dto = new InvoiceResponseDTO();
-        dto.setId(invoice.getId());
-        dto.setCustomerName(invoice.getCustomerName());
-        dto.setPaid(invoice.isPaid());
-        dto.setCreatedAt(invoice.getCreatedAt());
-        invoice.calculateTotalAmount();
-        dto.setTotalAmount(invoice.getTotalAmount());
-        List<InvoiceItemResponseDTO> itemDTOs = invoice.getItems().stream()
-                .map(this::convertToItemDTO)
-                .toList();
-        dto.setInvoiceItems(itemDTOs);
-        return dto;
-    }
-
-    private InvoiceItemResponseDTO convertToItemDTO(InvoiceItem item) {
-        InvoiceItemResponseDTO dto = new InvoiceItemResponseDTO();
-        dto.setId(item.getId());
-        dto.setProductName(item.getProductName());
-        dto.setPrice(item.getPrice());
-        dto.setDescription(item.getDescription());
-        return dto;
     }
 }
