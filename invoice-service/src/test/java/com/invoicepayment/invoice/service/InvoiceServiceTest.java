@@ -4,6 +4,7 @@ import com.invoicepayment.invoice.dto.InvoiceItemRequestDTO;
 import com.invoicepayment.invoice.dto.InvoiceRequestDTO;
 import com.invoicepayment.invoice.dto.InvoiceResponseDTO;
 import com.invoicepayment.invoice.exception.InvoiceException;
+import com.invoicepayment.invoice.mapper.InvoiceMapper;
 import com.invoicepayment.invoice.model.Invoice;
 import com.invoicepayment.invoice.model.InvoiceItem;
 import com.invoicepayment.invoice.repository.InvoiceRepository;
@@ -24,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -34,10 +36,18 @@ class InvoiceServiceTest {
     @Mock
     private InvoiceRepository invoiceRepository;
 
+    @Mock
+    private InvoiceValidator invoiceValidator;
+
+    @Mock
+    private InvoiceMapper invoiceMapper;
+
     @InjectMocks
     private InvoiceServiceImpl invoiceService;
 
     private Invoice invoice;
+
+    private InvoiceResponseDTO invoiceResponseDTO;
 
     @BeforeEach
     void setUp() {
@@ -51,11 +61,16 @@ class InvoiceServiceTest {
 
         invoice.setItems(Arrays.asList(item1, item2));
         invoice.setTotalAmount(250.0);
+
+        invoiceResponseDTO = new InvoiceResponseDTO();
+        invoiceResponseDTO.setId(1L);
+        invoiceResponseDTO.setCustomerName("John Doe");
     }
 
     @Test
     void shouldSaveInvoiceWhenValidDataProvided() {
         when(invoiceRepository.save(any(Invoice.class))).thenReturn(invoice);
+        when(invoiceMapper.mapDTOToInvoiceItem(any(), any())).thenReturn(new InvoiceItem());
 
         InvoiceRequestDTO request = new InvoiceRequestDTO();
         request.setCustomerName("Jhon Doe");
@@ -68,6 +83,7 @@ class InvoiceServiceTest {
 
         Invoice savedInvoice = invoiceService.createInvoice(request);
 
+        verify(invoiceValidator).validateInvoiceRequest(request);
         assertNotNull(savedInvoice);
         assertEquals(250.0, savedInvoice.getTotalAmount());
     }
@@ -76,17 +92,22 @@ class InvoiceServiceTest {
     void shouldThrowExceptionWhenNoLineItems() {
         InvoiceRequestDTO emptyInvoice = new InvoiceRequestDTO();
 
+        doThrow(new InvoiceException("Customer name is required."))
+                .when(invoiceValidator).validateInvoiceRequest(emptyInvoice);
+
         InvoiceException exception = assertThrows(InvoiceException.class, () -> {
             invoiceService.createInvoice(emptyInvoice);
         });
 
         assertEquals("Customer name is required.", exception.getMessage());
+        verify(invoiceValidator).validateInvoiceRequest(emptyInvoice);
         verify(invoiceRepository, never()).save(any());
     }
 
     @Test
     void shouldReturnInvoiceWhenIdExists() {
         when(invoiceRepository.findById(1L)).thenReturn(Optional.of(invoice));
+        when(invoiceMapper.convertToDTO(any())).thenReturn(invoiceResponseDTO);
 
         Optional<InvoiceResponseDTO> foundInvoice = invoiceService.getInvoiceById(1L);
 
@@ -98,6 +119,7 @@ class InvoiceServiceTest {
     @Test
     void shouldReturnInvoiceList() {
         when(invoiceRepository.findAll()).thenReturn(List.of(invoice));
+        when(invoiceMapper.convertToDTO(any())).thenReturn(invoiceResponseDTO);
 
         List<InvoiceResponseDTO> result = invoiceService.getAllInvoices();
 
@@ -111,6 +133,7 @@ class InvoiceServiceTest {
     @Test
     void shouldReturnMatchingInvoices() {
         when(invoiceRepository.searchByCustomerOrItemDescription("John")).thenReturn(List.of(invoice));
+        when(invoiceMapper.convertToDTO(any())).thenReturn(invoiceResponseDTO);
 
         List<InvoiceResponseDTO> result = invoiceService.searchInvoices("John");
 
@@ -127,6 +150,9 @@ class InvoiceServiceTest {
         request.setCustomerName("John Doe");
         request.setInvoiceItems(null);
 
+        doThrow(new InvoiceException("Invoice must contain at least one line item."))
+                .when(invoiceValidator).validateInvoiceRequest(request);
+
         InvoiceException exception = assertThrows(InvoiceException.class, () -> {
             invoiceService.createInvoice(request);
         });
@@ -139,6 +165,9 @@ class InvoiceServiceTest {
         InvoiceRequestDTO request = new InvoiceRequestDTO();
         request.setCustomerName("John Doe");
         request.setInvoiceItems(Collections.emptyList());
+
+        doThrow(new InvoiceException("Invoice must contain at least one line item."))
+                .when(invoiceValidator).validateInvoiceRequest(request);
 
         InvoiceException exception = assertThrows(InvoiceException.class, () -> {
             invoiceService.createInvoice(request);
@@ -155,7 +184,10 @@ class InvoiceServiceTest {
 
         InvoiceRequestDTO request = new InvoiceRequestDTO();
         request.setCustomerName("John Doe");
-        request.setInvoiceItems(List.of(invalidItem));  // Lista con un item inválido
+        request.setInvoiceItems(List.of(invalidItem));
+
+        doThrow(new InvoiceException("Item price must be greater than zero."))
+                .when(invoiceValidator).validateInvoiceRequest(request);
 
         InvoiceException exception = assertThrows(InvoiceException.class, () -> {
             invoiceService.createInvoice(request);
